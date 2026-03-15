@@ -73,8 +73,6 @@ Copy `.env.example` to `.env` and set:
 - `REQUEST_DELAY_SECONDS` (default `1.0`)
 - `USER_AGENT`
 - `BOOTSTRAP_LOOKBACK_DAYS` (default `30`)
-- `HELLOWORK_MAX_PAGES` (default `2`)
-- `WTTJ_MAX_PAGES` (default `2`)
 
 ## Exact Ubuntu install and run commands
 

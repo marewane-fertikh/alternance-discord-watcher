@@ -9,12 +9,11 @@ from watcher.domain.models import Offer, ScoreResult
 
 @dataclass(frozen=True)
 class ScoreWeights:
-    title_match: int = 45
-    description_domain_match: int = 20
+    title_match: int = 40
+    domain_match: int = 25
     stack_match: int = 20
-    negative_penalty: int = 45
+    negative_penalty: int = 40
     senior_penalty: int = 10
-    software_context_bonus: int = 10
 
 
 TITLE_KEYWORDS = [
@@ -30,13 +29,10 @@ TITLE_KEYWORDS = [
     "platform engineer",
     "sre",
     "architecte logiciel",
-    "devops",
-    "cloud",
 ]
-DOMAIN_KEYWORDS = ["devops", "cloud", "api", "architecture logicielle", "microservices", "kubernetes", "docker", "platform"]
-STACK_KEYWORDS = ["python", "java", "typescript", "node", "go", "spring", "django", "fastapi"]
-SOFTWARE_CONTEXT = ["logiciel", "software", "engineering", "developpement", "développement", "backend"]
 
+DOMAIN_KEYWORDS = ["devops", "cloud", "api", "architecture logicielle", "microservices", "kubernetes", "docker"]
+STACK_KEYWORDS = ["python", "java", "typescript", "node", "go", "spring", "django", "fastapi"]
 NEGATIVE_KEYWORDS = [
     "commercial",
     "business developer",
@@ -51,6 +47,8 @@ NEGATIVE_KEYWORDS = [
     "administratif",
     "assistant commercial",
 ]
+
+
 SENIOR_HINTS = ["senior", "lead", "10+ ans", "7+ ans"]
 
 
@@ -58,39 +56,33 @@ def score_offer(offer: Offer, weights: ScoreWeights | None = None) -> ScoreResul
     """Compute deterministic score [0..100] with textual explanation."""
 
     w = weights or ScoreWeights()
-    title_text = offer.title.lower()
-    desc_text = offer.description.lower()
-    merged_text = f"{title_text} {desc_text}"
+    text = f"{offer.title} {offer.description}".lower()
 
     positive: list[str] = []
     negative: list[str] = []
     score = 0
 
-    title_hits = [keyword for keyword in TITLE_KEYWORDS if keyword in title_text]
+    title_hits = [k for k in TITLE_KEYWORDS if k in text]
     if title_hits:
-        score += min(w.title_match, 20 + 10 * len(title_hits))
-        positive.extend([f"title:{value}" for value in title_hits[:2]])
+        score += w.title_match
+        positive.append(f"title:{title_hits[0]}")
 
-    domain_hits = [keyword for keyword in DOMAIN_KEYWORDS if keyword in merged_text]
+    domain_hits = [k for k in DOMAIN_KEYWORDS if k in text]
     if domain_hits:
-        score += min(w.description_domain_match, 8 + 4 * len(domain_hits))
-        positive.extend([f"domain:{value}" for value in domain_hits[:2]])
+        score += min(w.domain_match, 10 + 5 * len(domain_hits))
+        positive.extend([f"domain:{k}" for k in domain_hits[:2]])
 
-    stack_hits = [keyword for keyword in STACK_KEYWORDS if keyword in merged_text]
+    stack_hits = [k for k in STACK_KEYWORDS if k in text]
     if stack_hits:
         score += min(w.stack_match, 5 + 5 * len(stack_hits))
-        positive.extend([f"stack:{value}" for value in stack_hits[:2]])
+        positive.extend([f"stack:{k}" for k in stack_hits[:2]])
 
-    if any(keyword in merged_text for keyword in SOFTWARE_CONTEXT):
-        score += w.software_context_bonus
-        positive.append("context:software")
-
-    neg_hits = [keyword for keyword in NEGATIVE_KEYWORDS if keyword in merged_text]
+    neg_hits = [k for k in NEGATIVE_KEYWORDS if k in text]
     if neg_hits:
         score -= min(w.negative_penalty, 15 * len(neg_hits))
-        negative.extend([f"negative:{value}" for value in neg_hits[:2]])
+        negative.extend([f"negative:{k}" for k in neg_hits[:2]])
 
-    if any(keyword in merged_text for keyword in SENIOR_HINTS):
+    if any(k in text for k in SENIOR_HINTS):
         score -= w.senior_penalty
         negative.append("seniority:high")
 
@@ -98,12 +90,15 @@ def score_offer(offer: Offer, weights: ScoreWeights | None = None) -> ScoreResul
     accepted = score >= 60
     confidence = "high confidence" if score >= 75 else "medium confidence"
 
-    explanation_parts = ["contract ok", "location ok"] + positive + negative
+    explanation_parts = ["contract ok", "location ok"] + positive
+    if negative:
+        explanation_parts += negative
+
     return ScoreResult(
         accepted=accepted,
         score=score,
         confidence=confidence,
-        explanation=", ".join(explanation_parts[:7]),
+        explanation=", ".join(explanation_parts[:6]),
         positive_signals=positive,
         negative_signals=negative,
     )

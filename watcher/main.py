@@ -48,8 +48,8 @@ def main() -> int:
         user_agent=settings.user_agent,
     )
     adapters = [
-        HelloworkAdapter(fetcher, max_pages=settings.hellowork_max_pages),
-        WelcomeToTheJungleAdapter(fetcher, max_pages=settings.wttj_max_pages),
+        HelloworkAdapter(fetcher),
+        WelcomeToTheJungleAdapter(fetcher),
     ]
     store = SQLiteStore(settings.sqlite_db_path)
     notifier = DiscordWebhookNotifier(settings.discord_webhook_url, timeout=settings.request_timeout_seconds)

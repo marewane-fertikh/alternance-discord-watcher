@@ -22,8 +22,6 @@ class Settings:
     request_delay_seconds: float = 1.0
     user_agent: str = "alternance-discord-watcher/1.0"
     bootstrap_lookback_days: int = 30
-    hellowork_max_pages: int = 2
-    wttj_max_pages: int = 2
 
 
 def load_settings() -> Settings:
@@ -41,6 +39,4 @@ def load_settings() -> Settings:
         request_delay_seconds=float(os.getenv("REQUEST_DELAY_SECONDS", "1.0")),
         user_agent=os.getenv("USER_AGENT", "alternance-discord-watcher/1.0"),
         bootstrap_lookback_days=int(os.getenv("BOOTSTRAP_LOOKBACK_DAYS", "30")),
-        hellowork_max_pages=int(os.getenv("HELLOWORK_MAX_PAGES", "2")),
-        wttj_max_pages=int(os.getenv("WTTJ_MAX_PAGES", "2")),
     )

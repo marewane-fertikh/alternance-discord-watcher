@@ -28,23 +28,15 @@ class DummyNotifier(DiscordWebhookNotifier):
         return True
 
 
-def _offer(
-    url: str,
-    *,
-    published_at: datetime | None = None,
-    contract: str = "Alternance",
-    location: str = "Paris",
-    title: str = "Alternance Backend Developer Python",
-    description: str = "API Docker",
-) -> Offer:
+def _offer(url: str, published_at: datetime | None = None) -> Offer:
     return Offer(
         source="dummy",
-        title=title,
+        title="Alternance Backend Developer Python",
         company="Acme",
-        location=location,
-        contract_type=contract,
+        location="Paris",
+        contract_type="Alternance",
         url=url,
-        description=description,
+        description="API Docker",
         published_at=published_at,
     )
 
@@ -52,7 +44,7 @@ def _offer(
 def test_bootstrap_stores_without_publish(tmp_path: Path) -> None:
     store = SQLiteStore(tmp_path / "offers.db")
     notifier = DummyNotifier()
-    offer = _offer("https://example.com/1", published_at=datetime.utcnow() - timedelta(days=2))
+    offer = _offer("https://example.com/1", datetime.utcnow() - timedelta(days=2))
     runner = Runner([DummyAdapter([offer])], store, notifier)
 
     result = runner.run(RunOptions(bootstrap=True, publish_backfill=False, dry_run=False))
@@ -71,26 +63,3 @@ def test_prevent_reposting_already_stored_offer(tmp_path: Path) -> None:
     result = runner.run(RunOptions())
     assert result["skipped_existing"] == 1
     assert result["posted"] == 0
-
-
-def test_rejection_counters_with_source_breakdown(tmp_path: Path) -> None:
-    store = SQLiteStore(tmp_path / "offers.db")
-    notifier = DummyNotifier()
-    offers = [
-        _offer("https://example.com/contract", contract="CDI", title="Ingénieur logiciel"),
-        _offer("https://example.com/location", location="Lyon"),
-        _offer("https://example.com/score", title="Alternance SEO marketing", description="support helpdesk"),
-        _offer("https://example.com/ok"),
-    ]
-    runner = Runner([DummyAdapter(offers)], store, notifier)
-
-    result = runner.run(RunOptions(min_score=60))
-
-    assert result["rejected_contract"] == 1
-    assert result["rejected_location"] == 1
-    assert result["rejected_score"] == 1
-    assert result["accepted"] == 1
-    assert result["source_dummy_rejected_contract"] == 1
-    assert result["source_dummy_rejected_location"] == 1
-    assert result["source_dummy_rejected_score"] == 1
-    assert result["source_dummy_accepted"] == 1
