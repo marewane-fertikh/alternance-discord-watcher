@@ -3,3 +3,8 @@
 __pycache__/
 data/
 .pytest_cache/
+.env
+.venv/
+__pycache__/
+data/
+.pytest_cache/
