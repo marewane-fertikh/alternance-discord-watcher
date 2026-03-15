@@ -5,11 +5,11 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=%h/alternance-discord-watcher
-EnvironmentFile=%h/alternance-discord-watcher/.env
-ExecStart=%h/alternance-discord-watcher/.venv/bin/python -m watcher.main --once
+WorkingDirectory=/home/marewane/Projets/alternance-discord-watcher
+EnvironmentFile=/home/marewane/Projets/alternance-discord-watcher/.env
+ExecStart=/home/marewane/Projets/alternance-discord-watcher/.venv/bin/python -m watcher.main --once
 StandardOutput=journal
 StandardError=journal
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
